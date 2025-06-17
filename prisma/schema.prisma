@@ -1,0 +1,273 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User profile and settings
+  profile        UserProfile?
+  workoutPlans   WorkoutPlan[]
+  workoutSessions WorkoutSession[]
+  progressEntries ProgressEntry[]
+  achievements   Achievement[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Physical characteristics
+  age            Int?
+  weight         Float?
+  height         Float?
+  hasHyperlaxity Boolean @default(false)
+  
+  // Training preferences
+  experienceLevel String @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
+  trainingGoals   String[]
+  availableDays   Int    @default(5)
+  sessionDuration Int    @default(45) // minutes
+  
+  // Current program status
+  currentPhase    Int    @default(1)
+  currentWeek     Int    @default(1)
+  programStartDate DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model Exercise {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  category    String // UPPER_POWER, LOWER_POWER, CORE_POWER, AGILITY, STRENGTH, RECOVERY
+  type        String // POWER, STRENGTH, AGILITY, RECOVERY, COMPETITION
+  level       String // BEGINNER, INTERMEDIATE, ADVANCED
+  
+  // Media and instructions
+  videoUrl     String?
+  imageUrl     String?
+  instructions String[]
+  
+  // Equipment and setup
+  equipment            String[]
+  muscleGroups         String[]
+  
+  // Hyperlaxity modifications
+  hasHyperlaxityMod    Boolean @default(false)
+  hyperlaxityMod       String?
+  
+  // Exercise parameters
+  defaultSets          Int?
+  defaultReps          String? // Can be "8-10", "30s", etc.
+  defaultRestSeconds   Int?
+  defaultWeight        Float?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  workoutExercises WorkoutExercise[]
+  exerciseLogs     ExerciseLog[]
+
+  @@map("exercises")
+}
+
+model WorkoutPlan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String
+  description String?
+  phase       Int    // 1-4 (Foundation, Strength, Power, Peak)
+  week        Int    // 1-3 within each phase
+  day         Int    // 1-7 (day of week)
+  
+  // Plan metadata
+  estimatedDuration Int    // minutes
+  difficulty        String // LOW, MEDIUM, HIGH
+  focus            String // Main focus of the workout
+  
+  // Relations
+  exercises WorkoutExercise[]
+  sessions  WorkoutSession[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, phase, week, day])
+  @@map("workout_plans")
+}
+
+model WorkoutExercise {
+  id            String @id @default(cuid())
+  workoutPlanId String
+  exerciseId    String
+  
+  workoutPlan WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+  exercise    Exercise    @relation(fields: [exerciseId], references: [id])
+  
+  // Exercise parameters for this specific workout
+  orderIndex    Int
+  sets          Int
+  reps          String  // "8-10", "30s", "AMRAP", etc.
+  restSeconds   Int
+  weight        Float?
+  notes         String?
+  
+  // Progression rules
+  progressionType   String? // WEIGHT, REPS, TIME, SETS
+  progressionAmount Float?  // Amount to increase each week
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("workout_exercises")
+}
+
+model WorkoutSession {
+  id            String @id @default(cuid())
+  userId        String
+  workoutPlanId String?
+  
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutPlan WorkoutPlan? @relation(fields: [workoutPlanId], references: [id])
+  
+  // Session metadata
+  name          String
+  startedAt     DateTime
+  completedAt   DateTime?
+  duration      Int?      // minutes
+  status        String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+  
+  // Session data
+  notes         String?
+  rating        Int?      // 1-5 difficulty/satisfaction rating
+  
+  // Relations
+  exerciseLogs ExerciseLog[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("workout_sessions")
+}
+
+model ExerciseLog {
+  id               String @id @default(cuid())
+  workoutSessionId String
+  exerciseId       String
+  
+  workoutSession WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise       Exercise       @relation(fields: [exerciseId], references: [id])
+  
+  // Performance data
+  orderIndex   Int
+  setsCompleted Int
+  repsCompleted String[] // Array of reps per set ["10", "8", "6"]
+  weights      Float[]  // Array of weights per set
+  restTimes    Int[]    // Array of rest times between sets
+  
+  // Subjective data
+  difficulty   Int?     // 1-5 scale
+  notes        String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("exercise_logs")
+}
+
+model ProgressEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Performance metrics
+  verticalJump    Float? // cm
+  shuttleTime     Float? // seconds
+  pullUps         Int?
+  overallScore    Float?
+  
+  // Body composition
+  weight          Float?
+  bodyFatPercent  Float?
+  
+  // Subjective measures
+  energyLevel     Int?   // 1-10 scale
+  sleepQuality    Int?   // 1-10 scale
+  motivation      Int?   // 1-10 scale
+  
+  // Context
+  phase           Int
+  week            Int
+  notes           String?
+  
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@map("progress_entries")
+}
+
+model Achievement {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String
+  type        String  // PERFORMANCE, CONSISTENCY, MILESTONE
+  icon        String?
+  
+  // Achievement criteria
+  metric      String? // What was measured
+  value       Float?  // Value achieved
+  threshold   Float?  // Threshold that was crossed
+  
+  unlockedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@map("achievements")
+}
+
+// Predefined program templates
+model ProgramTemplate {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  
+  // Program structure
+  totalWeeks  Int
+  phases      Int
+  
+  // Target audience
+  level       String   // BEGINNER, INTERMEDIATE, ADVANCED
+  sport       String   // HANDBALL, GENERAL
+  goals       String[] // POWER, STRENGTH, AGILITY, etc.
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("program_templates")
+}
