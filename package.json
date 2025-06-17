@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:setup": "node scripts/setup-db.js",
+    "db:seed": "node scripts/seed-db.js",
+    "db:reset": "npm run db:setup && npm run db:seed",
+    "prisma:generate": "OPENSSL_CONF=/dev/null prisma generate",
+    "prisma:push": "OPENSSL_CONF=/dev/null prisma db push",
+    "prisma:studio": "OPENSSL_CONF=/dev/null prisma studio"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
