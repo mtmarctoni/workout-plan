@@ -23,16 +23,26 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
+          disableTransitionOnChange={false}
         >
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-500">
             <Navigation />
             <main className="flex-1">
               {children}
             </main>
-            <Toaster />
+            <Toaster 
+              theme="system"
+              className="dark:bg-slate-800 dark:text-slate-100"
+              toastOptions={{
+                style: {
+                  background: 'hsl(var(--card))',
+                  color: 'hsl(var(--card-foreground))',
+                  border: '1px solid hsl(var(--border))',
+                },
+              }}
+            />
           </div>
         </ThemeProvider>
       </body>
