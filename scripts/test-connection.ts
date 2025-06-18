@@ -1,9 +1,14 @@
-const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
-const path = require('path');
+import { PrismaClient } from '@prisma/client';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Get the current file's directory in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
-function loadEnvFile() {
+function loadEnvFile(): boolean {
   const envPath = path.join(process.cwd(), '.env');
   const envLocalPath = path.join(process.cwd(), '.env.local');
   
@@ -36,10 +41,6 @@ async function testConnection() {
     process.exit(1);
   }
   
-  // Set SSL bypass for WebContainer
-  process.env.OPENSSL_CONF = '/dev/null';
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  
   const prisma = new PrismaClient({
     datasources: {
       db: {
@@ -49,26 +50,21 @@ async function testConnection() {
   });
 
   try {
-    console.log('🔗 Attempting to connect...');
     await prisma.$connect();
-    console.log('✅ Database connection successful!');
+    console.log('✅ Successfully connected to the database');
     
-    console.log('📊 Testing query...');
+    // Test a simple query
     const result = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log('✅ Query test successful:', result);
+    console.log('✅ Test query executed successfully:', result);
     
-  } catch (error) {
-    console.error('❌ Connection failed:', error.message);
-    
-    if (error.message.includes('P1001')) {
-      console.log('💡 This is a connection error. Check your DATABASE_URL and network.');
-    } else if (error.message.includes('SSL')) {
-      console.log('💡 SSL error detected. This is common in WebContainer environments.');
-    }
-    
-  } finally {
     await prisma.$disconnect();
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Failed to connect to the database:');
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
   }
 }
 
-testConnection();
+testConnection().catch(console.error);

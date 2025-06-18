@@ -1,0 +1,17 @@
+import { users } from './users.seed.js';
+import { userProfiles } from './userProfiles.seed.js';
+import { exercises } from './exercises.seed.js';
+import { phase1WorkoutPlans } from './workoutPlans/phase1.seed.js';
+import { phase2WorkoutPlans } from './workoutPlans/phase2.seed.js';
+// ...etc
+
+export const seedData = {
+  users,
+  userProfiles,
+  exercises,
+  workoutPlans: [
+    ...phase1WorkoutPlans,
+    ...phase2WorkoutPlans,
+    // ...etc
+  ],
+};
