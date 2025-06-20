@@ -10,10 +10,6 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
-  // Add this to handle ES module imports in node_modules
-  experimental: {
-    esmExternals: 'loose'
-  }
 };
 
 module.exports = nextConfig;
