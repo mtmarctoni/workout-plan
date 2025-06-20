@@ -197,7 +197,10 @@ model ExerciseLog {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("exercise_logs")
+  // @@unique([workoutSessionId, exerciseId])
+  // @@map("exercise_logs")
+  @@unique([workoutSessionId, exerciseId], name: "workoutSessionId_exerciseId")
+
 }
 
 model ProgressEntry {

@@ -10,6 +10,26 @@ export type ExerciseWithDetails = Prisma.ExerciseGetPayload<{
   include: { workoutExercises: true };
 }>;
 
+// exercise interface for exercises in db using prisma
+// export type Exercise = Prisma.ExerciseGetPayload<{}>; // No relations included
+
+export interface Exercise {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  level: string;
+  equipment: string[];
+  muscleGroups: string[];
+  imageUrl: string | null;
+  instructions: string[];
+  hasHyperlaxityMod: boolean;
+  hyperlaxityMod: string | null;
+  defaultSets: number | null;
+  defaultReps: string | null;
+  type: string;
+}
+
 // Workout types
 export type WorkoutPlanWithExercises = Prisma.WorkoutPlanGetPayload<{
   include: {
@@ -44,6 +64,58 @@ export type WorkoutSessionWithLogs = Prisma.WorkoutSessionGetPayload<{
 export type ProgressWithHistory = Prisma.ProgressEntryGetPayload<{
   include: { user: true };
 }>;
+
+export type FilterOption = {
+  value: string;
+  label: string;
+};
+
+export type WorkoutExerciseWithDetails = {
+  id: string;
+  orderIndex: number;
+  sets: number;
+  reps: string;
+  restSeconds: number;
+  weight: number | null;
+  notes: string | null;
+  exercise: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    type: string;
+    level: string;
+    instructions: string[];
+    equipment: string[];
+    muscleGroups: string[];
+    hasHyperlaxityMod: boolean;
+    hyperlaxityMod: string | null;
+    videoUrl?: string;
+  };
+  workoutPlan: {
+    id: string;
+    name: string;
+    phase: number;
+    week: number;
+    day: number;
+    estimatedDuration: number;
+    difficulty: string;
+    focus: string;
+  };
+};
+
+// Workout types
+export interface TodayWorkout {
+  id: string;
+  name: string;
+  phase: number;
+  week: number;
+  day: number;
+  estimatedDuration: number;
+  difficulty: string;
+  focus: string;
+  currentSessionId?: string;
+}
 
 // Enums
 export enum ExerciseCategory {
