@@ -464,7 +464,7 @@ export default function Analytics() {
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 className="font-medium text-blue-800 mb-2">📈 Power Development</h4>
                 <p className="text-sm text-blue-700">
-                  Vertical jump improvements are accelerating. You're now in the top 15% for your age group.
+                  Vertical jump improvements are accelerating. You are now in the top 15% for your age group.
                 </p>
               </div>
               

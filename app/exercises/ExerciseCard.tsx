@@ -3,26 +3,22 @@ import { Badge } from '@/components/ui/badge';
 import { Exercise } from '@/lib/types';
 import ExerciseDetailsDialog from './ExerciseDetailsDialog';
 import { AlertTriangle, Target } from 'lucide-react';
+import {ExerciseMedia} from '@/components/ExerciseMedia';
 
 interface ExerciseCardProps {
-  exercise: Exercise;
+  exercise: Exercise ;
 }
 
 export default function ExerciseCard({ exercise }: ExerciseCardProps) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-video overflow-hidden">
-        {exercise.imageUrl ? (
-          <img 
-            src={exercise.imageUrl} 
-            alt={exercise.name}
-            className="w-full h-full object-cover"
+        <ExerciseMedia
+          videoUrl={exercise.videoUrl}
+          imageUrl={exercise.imageUrl}
+          alt={exercise.name}
+          className="w-full h-full object-cover"
           />
-        ) : (
-          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center text-gray-500">
-            No Image
-          </div>
-        )}
       </div>
       <CardHeader>
         <div className="flex items-start justify-between">

@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, BookOpen, Play } from 'lucide-react';
 import { Exercise } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import {ExerciseMedia} from '@/components/ExerciseMedia';
 
 interface ExerciseDetailsDialogProps {
   exercise: Exercise;
@@ -33,17 +34,12 @@ export default function ExerciseDetailsDialog({ exercise }: ExerciseDetailsDialo
         
         <div className="space-y-6">
           <div className="aspect-video overflow-hidden rounded-lg">
-            {exercise.imageUrl ? (
-              <img 
-                src={exercise.imageUrl} 
-                alt={exercise.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center text-gray-500">
-                No Image
-              </div>
-            )}
+            <ExerciseMedia
+              videoUrl={exercise.videoUrl}
+              imageUrl={exercise.imageUrl}
+              alt={exercise.name}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <Tabs defaultValue="instructions" className="w-full">

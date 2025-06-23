@@ -21,6 +21,7 @@ export interface Exercise {
   level: string;
   equipment: string[];
   muscleGroups: string[];
+  videoUrl?: string | null;
   imageUrl: string | null;
   instructions: string[];
   hasHyperlaxityMod: boolean;

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExerciseMedia } from './ExerciseMedia';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { Badge } from '@/components/ui/badge';
 import { Zap, AlertTriangle } from 'lucide-react';
 import { ExerciseType } from '@/lib/types';

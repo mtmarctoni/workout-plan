@@ -15,6 +15,7 @@ export async function getExercises() {
         equipment: true,
         muscleGroups: true,
         imageUrl: true,
+        videoUrl: true,
         instructions: true,
         hasHyperlaxityMod: true,
         hyperlaxityMod: true,

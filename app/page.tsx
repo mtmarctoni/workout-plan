@@ -126,7 +126,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-orange-600" />
-              Today's Workout
+              Workout for Today
             </CardTitle>
             <CardDescription>
               {todayWorkout.phase} Phase
