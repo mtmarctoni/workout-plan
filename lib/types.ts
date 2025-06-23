@@ -5,6 +5,13 @@ export type UserWithProfile = Prisma.UserGetPayload<{
   include: { profile: true };
 }>;
 
+export interface User {
+  id: string | null,
+  email: string | null,
+  name: string | null,
+  avatar: string | null
+}
+
 // Exercise types
 export type ExerciseWithDetails = Prisma.ExerciseGetPayload<{
   include: { workoutExercises: true };

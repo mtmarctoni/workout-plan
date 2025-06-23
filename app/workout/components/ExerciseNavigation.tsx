@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Exercise } from '@/lib/types';
 
 interface ExerciseNavigationProps {
   currentExerciseIdx: number;

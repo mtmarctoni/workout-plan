@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ import {
   Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/hooks/use-users';
 
 const navigationItems = [
   {
@@ -80,12 +81,18 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname();
-  const [user] = useState({
-    name: 'Alex Rodriguez',
-    email: 'alex@example.com',
-    avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400',
-    plan: 'Pro'
-  });
+  // Use the useUser hook to fetch user data
+  const userId = 'user1'; // Temporary hardcoded user ID
+  const { user, loading, error } = useUser(userId);
+
+  // Default user data in case of loading or error
+  const userData = {
+    id: user?.id || userId,
+    name: user?.name || 'Loading...',
+    email: user?.email || 'loading@example.com',
+    avatar: user?.avatar || undefined,
+    plan: 'Free' // Default plan
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
@@ -130,7 +137,7 @@ export function Navigation() {
               variant="secondary" 
               className="hidden sm:inline-flex bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 dark:from-blue-900/30 dark:to-purple-900/30 dark:text-blue-300 border-0"
             >
-              {user.plan} Plan
+              {userData.plan} Plan
             </Badge>
             
             <ThemeToggle />
@@ -139,7 +146,7 @@ export function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-accent/50 transition-colors duration-200">
                   <Avatar className="h-10 w-10 ring-2 ring-background">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={userData.avatar} alt={userData.name} />
                     <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">AR</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -147,8 +154,8 @@ export function Navigation() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-medium leading-none">{userData.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{userData.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -199,6 +206,28 @@ export function Navigation() {
                       </div>
                     </Link>
                   ))}
+                  <div className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage 
+                        src={userData.avatar} 
+                        alt={userData.name || 'User'} 
+                      />
+                      <AvatarFallback>
+                        {(userData.name || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="ml-2">
+                      <p className="text-sm font-medium">
+                        {loading ? 'Loading...' : userData.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {loading ? 'loading...' : userData.email}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="ml-2">
+                      {userData.plan}
+                    </Badge>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
