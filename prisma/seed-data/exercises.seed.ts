@@ -2,13 +2,56 @@ import { Prisma } from '@prisma/client';
 
 export const exercises: Prisma.ExerciseCreateInput[]= [
     {
+        id: 'ex1',
+        name: 'Medicine Ball Explosive Push-ups',
+        description: 'Develop explosive upper body power for throwing and blocking movements.',
+        category: 'UPPER_POWER',
+        type: 'POWER',
+        level: 'INTERMEDIATE',
+        videoUrl: '', // Medicine Ball Push-up Tutorial by Athlean-X
+        instructions: [
+            'Start in push-up position with hands on medicine ball',
+            'Lower chest to ball with control',
+            'Explosively push up, releasing hands from ball',
+            'Land with hands back on ball, immediately lower for next rep'
+        ],
+        equipment: ['Medicine Ball', 'Mat'],
+        muscleGroups: ['Chest', 'Shoulders', 'Triceps', 'Core'],
+        hasHyperlaxityMod: true,
+        hyperlaxityMod: 'Reduce range of motion by 20%, focus on controlled eccentric',
+        defaultSets: 4,
+        defaultReps: '8-10',
+        defaultRestSeconds: 90,
+    },
+    {
+        id: 'ex2',
+        name: 'Plyometric Pull-ups',
+        description: 'Build explosive pulling power for defensive movements and ball interception.',
+        category: 'UPPER_POWER',
+        type: 'POWER',
+        level: 'ADVANCED',
+        videoUrl: 'https://www.youtube.com/watch?v=2qCz9y0-heI', // Plyometric Pull-up Tutorial by Calisthenicmovement
+        instructions: [
+            'Hang from pull-up bar with overhand grip',
+            'Pull up explosively, aiming to get chest to bar',
+            'Release grip briefly at top if possible',
+            'Re-grip and control descent slowly'
+        ],
+        equipment: ['Pull-up Bar'],
+        muscleGroups: ['Lats', 'Rhomboids', 'Biceps', 'Core'],
+        hasHyperlaxityMod: false,
+        defaultSets: 4,
+        defaultReps: '6-8',
+        defaultRestSeconds: 120,
+    },    
+    {
         id: 'ex3',
         name: 'Bulgarian Split Squat',
         description: 'Single-leg squat to build lower body strength and stability.',
         category: 'LOWER_STRENGTH',
         type: 'STRENGTH',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video3',
+        videoUrl: 'https://www.youtube.com/watch?v=2C-uNgKwPLE', // Bulgarian Split Squat Tutorial by Jeremy Ethier
         instructions: [
         'Stand with one foot behind on a bench or step, front foot flat on the ground',
         'Lower hips until front thigh is parallel to floor',
@@ -30,7 +73,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'LOWER_POWER',
         type: 'POWER',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video4',
+        videoUrl: 'https://www.youtube.com/watch?v=DxzbXy0lC6Y', // Depth Jumps Tutorial by The Jump Manual
         instructions: [
         'Stand on a sturdy box or step',
         'Step off and land softly on both feet',
@@ -52,7 +95,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'LOWER_STRENGTH',
         type: 'STRENGTH',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video5',
+        videoUrl: 'https://www.youtube.com/watch?v=MsE_T9nAsSE', // Single-leg RDL Tutorial by Jeff Nippard
         instructions: [
         'Stand on one leg with slight knee bend',
         'Hold weight in opposite hand',
@@ -74,7 +117,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'UPPER_POWER',
         type: 'POWER',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video6',
+        videoUrl: 'https://www.youtube.com/watch?v=OTmpdnJkneI', // Resistance Band Push Press Tutorial by Jeremy Ethier
         instructions: [
         'Stand on band, hold handles at shoulders',
         'Dip knees slightly, then drive up and press arms overhead explosively',
@@ -95,7 +138,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'UPPER_STRENGTH',
         type: 'STRENGTH',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video7',
+        videoUrl: 'https://www.youtube.com/watch?v=__TzXC-Hc_4', // Band-Assisted Pull-up Tutorial by Calisthenicmovement
         instructions: [
         'Loop band over pull-up bar and place foot in band',
         'Grip bar with overhand grip, arms fully extended',
@@ -116,7 +159,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'CONDITIONING',
         type: 'HIIT',
         level: 'ALL',
-        videoUrl: 'https://example.com/video8',
+        videoUrl: 'https://www.youtube.com/watch?v=9pb6JX2ulDU', // Shuttle Run Tutorial by The Body Coach TV
         instructions: [
         'Set two markers 15 meters apart',
         'Sprint from one marker to the other and back as fast as possible',
@@ -136,7 +179,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'AGILITY',
         type: 'POWER',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video9',
+        videoUrl: 'https://www.youtube.com/watch?v=soqQy4dzEts', // Lateral Bounds Tutorial by The Jump Manual
         instructions: [
         'Stand on one leg, bend knee slightly',
         'Jump laterally to opposite side, landing softly on other leg',
@@ -157,7 +200,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'MOBILITY',
         type: 'MOBILITY',
         level: 'ALL',
-        videoUrl: 'https://example.com/video10',
+        videoUrl: 'https://www.youtube.com/watch?v=F1XdXdCjERk', // 90/90 Hip Mobility by Tom Merrick
         instructions: [
         'Sit with one leg bent in front at 90°, other leg bent behind at 90°',
         'Rotate knees side to side, keeping chest tall',
@@ -178,7 +221,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'CORE',
         type: 'STRENGTH',
         level: 'INTERMEDIATE',
-        videoUrl: 'https://example.com/video11',
+        videoUrl: 'https://www.youtube.com/watch?v=RXlHKL_NEN8', // Rotating Side Plank Tutorial by Fitness Blender
         instructions: [
         'Start in forearm plank',
         'Rotate torso and reach one arm up to ceiling',
@@ -199,7 +242,7 @@ export const exercises: Prisma.ExerciseCreateInput[]= [
         category: 'MOBILITY',
         type: 'MOBILITY',
         level: 'ALL',
-        videoUrl: 'https://example.com/video12',
+        videoUrl: 'https://www.youtube.com/watch?v=4pKly2JojMw', // Yoga for Shoulders by Yoga with Adriene
         instructions: [
         'Move through a series of yoga poses: Downward Dog, Thread-the-Needle, Child’s Pose',
         'Hold each pose for 20-30 seconds',

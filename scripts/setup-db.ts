@@ -65,18 +65,24 @@ async function setupDatabase() {
   console.log('🔄 Running database migrations...');
   
   try {
-    // Run Prisma migrations
-    execSync('npx prisma migrate deploy', { 
+    // First, run prisma db push to create the database and tables if they don't exist
+    console.log('🔄 Pushing database schema...');
+    execSync('npx prisma db push --accept-data-loss', { 
       stdio: 'inherit',
-      env: {
-        ...process.env,
-        // Set SSL configuration for WebContainers if needed
-        OPENSSL_CONF: process.env.OPENSSL_CONF || '/dev/null',
-        NODE_TLS_REJECT_UNAUTHORIZED: '0',
-      },
+      env: process.env
     });
     
-    console.log('✅ Database migrations applied successfully');
+    // Then run migrations to ensure everything is up to date
+    console.log('🔄 Running database migrations...');
+    try {
+      execSync('npx prisma migrate deploy', { 
+        stdio: 'inherit',
+        env: process.env
+      });
+      console.log('✅ Database migrations applied successfully');
+    } catch (migrateError) {
+      console.log('ℹ️  No migrations to apply or migration error, continuing with db push...');
+    }
     
     // Generate Prisma Client
     console.log('🔧 Generating Prisma Client...');

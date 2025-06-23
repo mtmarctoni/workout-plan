@@ -94,6 +94,8 @@ export async function getWorkoutPlanById(
   userId: string
 ): Promise<{ data: WorkoutPlanWithExercisesAndSession | null; error: string | null }> {
   try {
+    console.log('getWorkoutPlanById', id, userId);
+
     // Get the most recent workout session for this plan and user
     const latestSession = await prisma.workoutSession.findFirst({
       where: {
@@ -104,9 +106,9 @@ export async function getWorkoutPlanById(
       orderBy: {
         startedAt: 'desc'
       },
-      include: {
-        exerciseLogs: true
-      }
+      // include: {
+      //   exerciseLogs: true
+      // }
     });
 
     const workoutPlan = await prisma.workoutPlan.findUnique({
@@ -136,9 +138,9 @@ export async function getWorkoutPlanById(
 
     // Enhance exercises with completion status
     const exercisesWithStatus = workoutPlan.exercises.map(exercise => {
-      const exerciseLog = latestSession?.exerciseLogs.find(
-        log => log.exerciseId === exercise.exerciseId
-      );
+      // const exerciseLog = latestSession?.exerciseLogs.find(
+      //   log => log.exerciseId === exercise.exerciseId
+      // );
       
       // Create a properly typed exercise with completion status
       const exerciseWithStatus: WorkoutExerciseWithDetails & { completed: boolean } = {
@@ -167,7 +169,8 @@ export async function getWorkoutPlanById(
           difficulty: workoutPlan.difficulty,
           focus: workoutPlan.focus,
         },
-        completed: !!exerciseLog && exerciseLog.setsCompleted >= exercise.sets
+        // completed: !!exerciseLog && exerciseLog.setsCompleted >= exercise.sets
+        completed: false
       };
       
       return exerciseWithStatus;
@@ -194,6 +197,7 @@ export async function getWorkoutPlanById(
 
 export async function createOrResumeWorkoutSession(workoutPlanId: string, userId: string) {
   try {
+    console.log('createOrResumeWorkoutSession', workoutPlanId, userId);
     // Check for existing in-progress session
     const existingSession = await prisma.workoutSession.findFirst({
       where: {
@@ -231,138 +235,6 @@ export async function createOrResumeWorkoutSession(workoutPlanId: string, userId
   }
 }
 
-// export async function completeExerciseSet(
-//   sessionId: string, 
-//   exerciseId: string, 
-//   setsCompleted: number,
-//   repsCompleted: string[],
-//   weights: number[],
-//   restTimes: number[]
-// ) {
-//   try {
-//     const exercise = await prisma.workoutExercise.findUnique({
-//       where: { id: exerciseId },
-//       select: { sets: true, orderIndex: true }
-//     });
-
-//     if (!exercise) {
-//       return { error: 'Exercise not found' };
-//     }
-
-
-//     // First try to find an existing log
-//     const existingLog = await prisma.exerciseLog.findFirst({
-//       where: {
-//         workoutSessionId: sessionId,
-//         exerciseId: exerciseId
-//       }
-//     });
-
-//     if (existingLog) {
-//       // Update existing log
-//       await prisma.exerciseLog.update({
-//         where: { id: existingLog.id },
-//         data: {
-//           setsCompleted,
-//           repsCompleted,
-//           weights,
-//           restTimes
-//         }
-//       });
-//     } else {
-//       // Create new log
-//       await prisma.exerciseLog.create({
-//         data: {
-//           workoutSessionId: sessionId,
-//           exerciseId,
-//           orderIndex: exercise.orderIndex,
-//           setsCompleted,
-//           repsCompleted,
-//           weights,
-//           restTimes
-//         }
-//       });
-//     }
-
-
-//     return { error: null };
-//   } catch (error) {
-//     console.error('Error completing exercise set:', error);
-//     return { 
-//       error: error instanceof Error ? error.message : 'Failed to complete exercise set' 
-//     };
-//   }
-// }
-
-export async function completeExerciseSet(
-    sessionId: string, 
-    exerciseId: string, 
-    setsCompleted: number,
-    repsCompleted: string[],
-    weights: number[],
-    restTimes: number[]
-  ): Promise<{ data?: ExerciseLog; error: string | null }> {
-    // Input validation
-    if (!sessionId || !exerciseId) {
-      return { error: 'Session ID and Exercise ID are required' };
-    }
-    if (setsCompleted < 0) {
-      return { error: 'Sets completed cannot be negative' };
-    }
-    if (repsCompleted.length !== setsCompleted || 
-        weights.length !== setsCompleted ||
-        restTimes.length !== setsCompleted - 1) {
-      return { error: 'Invalid input array lengths' };
-    }
-  
-    try {
-      return await prisma.$transaction(async (tx) => {
-        // Get exercise in transaction to ensure consistency
-        const exercise = await tx.workoutExercise.findUnique({
-          where: { id: exerciseId },
-          select: { sets: true, orderIndex: true }
-        });
-  
-        if (!exercise) {
-          throw new Error('Exercise not found');
-        }
-  
-        if (setsCompleted > exercise.sets) {
-          throw new Error('Completed sets cannot exceed total sets');
-        }
-  
-        // Use upsert to handle create/update atomically
-        const log = await tx.exerciseLog.upsert({
-          where: {
-            id: 'dummy-id' // Provide a dummy ID if creating new
-          },
-          create: {
-            workoutSessionId: sessionId,
-            exerciseId,
-            orderIndex: exercise.orderIndex,
-            setsCompleted,
-            repsCompleted,
-            weights,
-            restTimes
-          },
-          update: {
-            setsCompleted,
-            repsCompleted,
-            weights,
-            restTimes
-          }
-        });
-  
-        return { data: log, error: null };
-      });
-    } catch (error) {
-      console.error('Error completing exercise set:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Failed to complete exercise set' 
-      };
-    }
-  }
-
 export async function completeWorkoutSession(sessionId: string) {
   try {
     const session = await prisma.workoutSession.update({
@@ -371,9 +243,9 @@ export async function completeWorkoutSession(sessionId: string) {
         status: 'COMPLETED',
         completedAt: new Date()
       },
-      include: {
-        exerciseLogs: true
-      }
+      // include: {
+      //   exerciseLogs: true
+      // }
     });
 
     return { data: session, error: null };
@@ -388,19 +260,63 @@ export async function completeWorkoutSession(sessionId: string) {
 
 export async function getCurrentUserWorkout(userId: string) {
   try {
-    // Get the latest workout plan for the user
-    const latestWorkoutPlan = await prisma.workoutPlan.findFirst({
-      where: { userId },
+    // First, check if there's a workout session in progress
+    const activeSession = await prisma.workoutSession.findFirst({
+      where: { 
+        userId,
+        status: 'IN_PROGRESS'
+      },
+      orderBy: { startedAt: 'desc' },
+      include: {
+        workoutPlan: true
+      }
+    });
+
+    // If we have an active session, return its workout plan
+    if (activeSession?.workoutPlanId) {
+      const { data: workoutPlan, error } = await getWorkoutPlanById(activeSession.workoutPlanId, userId);
+      if (!error && workoutPlan) {
+        return { data: { ...workoutPlan, currentSessionId: activeSession.id }, error: null };
+      }
+    }
+
+    // If no active session, get the next workout plan
+    const nextWorkoutPlan = await prisma.workoutPlan.findFirst({
+      where: { 
+        userId,
+        // Only get plans that don't have a completed session today
+        sessions: {
+          none: {
+            status: 'COMPLETED',
+            startedAt: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lt: new Date(new Date().setHours(23, 59, 59, 999))
+            }
+          }
+        }
+      },
       orderBy: [{ phase: 'asc' }, { week: 'asc' }, { day: 'asc' }],
       take: 1
     });
 
-    if (!latestWorkoutPlan) {
-      return { data: null, error: 'No workout plan found' };
+    if (!nextWorkoutPlan) {
+      // If no next plan, return the latest completed plan
+      const latestWorkoutPlan = await prisma.workoutPlan.findFirst({
+        where: { userId },
+        orderBy: [{ phase: 'desc' }, { week: 'desc' }, { day: 'desc' }],
+        take: 1
+      });
+      
+      if (!latestWorkoutPlan) {
+        return { data: null, error: 'No workout plan found' };
+      }
+      
+      const { data: workoutPlan, error } = await getWorkoutPlanById(latestWorkoutPlan.id, userId);
+      return { data: workoutPlan, error };
     }
 
-    // Get the exercises for this workout plan with completion status
-    const { data: workoutPlan, error } = await getWorkoutPlanById(latestWorkoutPlan.id, userId);
+    // Get the exercises for the next workout plan
+    const { data: workoutPlan, error } = await getWorkoutPlanById(nextWorkoutPlan.id, userId);
     
     if (error) {
       return { data: null, error };

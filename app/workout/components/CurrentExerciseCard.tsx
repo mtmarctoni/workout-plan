@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExerciseMedia } from './ExerciseMedia';
 import { Badge } from '@/components/ui/badge';
 import { Zap, AlertTriangle } from 'lucide-react';
 import { ExerciseType } from '@/lib/types';
@@ -75,20 +76,11 @@ export default function CurrentExerciseCard({
               </TabsList>
 
               <TabsContent value="exercise" className="space-y-4">
-                {/* Exercise Video/Image */}
-                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  {exerciseVideoUrl ? (
-                    <img 
-                      src={exerciseVideoUrl} 
-                      alt={exerciseName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">No video available</span>
-                    </div>
-                  )}
-                </div>
+                <ExerciseMedia 
+                  videoUrl={exerciseVideoUrl}
+                  imageUrl={exercise.imageUrl}
+                  alt={exerciseName}
+                />
 
                 {/* Exercise Details */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">

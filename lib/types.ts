@@ -113,7 +113,7 @@ export interface TodayWorkout {
   day: number;
   estimatedDuration: number;
   difficulty: string;
-  focus: string;
+  focus: string; // Single string as per the Prisma schema
   currentSessionId?: string;
 }
 

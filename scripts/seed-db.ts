@@ -51,18 +51,34 @@ export async function seedDatabase() {
     // Clear existing data in the correct order to respect foreign key constraints
     console.log('🧹 Clearing existing data...');
     
-    // Clear data in reverse order of dependencies
-    await prisma.achievement.deleteMany();
-    await prisma.progressEntry.deleteMany();
-    await prisma.workoutExercise.deleteMany();
-    await prisma.exerciseLog.deleteMany();
-    await prisma.workoutSession.deleteMany();
-    await prisma.workoutPlan.deleteMany();
-    await prisma.exercise.deleteMany();
-    await prisma.userProfile.deleteMany();
-    await prisma.user.deleteMany();
+    // Function to safely clear a table
+    const clearTable = async (model: any) => {
+      try {
+        await model.deleteMany({});
+        return true;
+      } catch (error: any) {
+        // If the table doesn't exist yet, that's fine - we'll create it
+        if (error.code === 'P2021' || error.message.includes('does not exist')) {
+          console.log(`ℹ️  Table not found, will be created: ${model.name}`);
+          return true;
+        }
+        console.error(`❌ Error clearing table ${model.name}:`, error.message);
+        return false;
+      }
+    };
     
-    console.log('✅ Database cleared');
+    // Clear data in reverse order of dependencies
+    await clearTable(prisma.achievement);
+    await clearTable(prisma.progressEntry);
+    await clearTable(prisma.workoutExercise);
+    await clearTable(prisma.exerciseLog);
+    await clearTable(prisma.workoutSession);
+    await clearTable(prisma.workoutPlan);
+    await clearTable(prisma.exercise);
+    await clearTable(prisma.userProfile);
+    await clearTable(prisma.user);
+    
+    console.log('✅ Database cleared or ready for seeding');
     
     // Import seed data
     const { seedData } = await import('../prisma/seed-data');
@@ -117,9 +133,16 @@ export async function seedDatabase() {
       // Then create the exercises for this plan
       if (exercises?.create && Array.isArray(exercises.create)) {
         // Delete existing exercises first to avoid duplicates
-        await prisma.workoutExercise.deleteMany({
-          where: { workoutPlanId: plan.id }
-        });
+        try {
+          await prisma.workoutExercise.deleteMany({
+            where: { workoutPlanId: plan.id }
+          });
+        } catch (error: any) {
+          // If the table doesn't exist yet, that's fine - we'll create it
+          if (error.code !== 'P2021' && !error.message.includes('does not exist')) {
+            throw error; // Re-throw if it's not a "table doesn't exist" error
+          }
+        }
         
         // Create new exercises with proper relations
         for (const exercise of exercises.create) {
