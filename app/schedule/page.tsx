@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import ShadcnCalendar from '@/components/ui/calendar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -241,7 +239,7 @@ export default function Schedule() {
                           <div>
                             <h3 className="font-semibold text-sm mb-1">{workout.name}</h3>
                             <div className="space-y-1">
-                              <Badge className={getTypeColor(workout.type)} size="sm">
+                              <Badge className={getTypeColor(workout.type)}>
                                 {workout.type}
                               </Badge>
                               {getStatusBadge(workout.status)}

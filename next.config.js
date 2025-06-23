@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // output: 'export', // when using APIs we need to export the app
   eslint: {
     ignoreDuringBuilds: true,
   },
