@@ -1,6 +1,6 @@
 'use server';
 
-import { ExerciseLog, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { WorkoutExerciseWithDetails } from '@/lib/types';
 
