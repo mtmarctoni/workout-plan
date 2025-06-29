@@ -1,210 +1,276 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format, addWeeks, addDays, startOfWeek, nextMonday } from 'date-fns';
+import { DatePickerWithPresets } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Calendar as CalendarIcon,
-  Clock,
-  Target,
-  Play,
-  CheckCircle,
-  Plus,
-  Filter,
-  TrendingUp
-} from 'lucide-react';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { 
+  getScheduleForWeek, 
+  getCurrentWeekSchedule, 
+  getPhasesAndWeeks, 
+  startWorkout,
+  type ScheduleWeek
+} from './actions';
+import { 
+  ScheduleHeader,
+  StatsGrid,
+  WeekNavigator,
+  WorkoutCard,
+} from './components';
+import type { Stats, PhaseWeeks } from './types';
 
 export default function Schedule() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isStartingWorkout, setIsStartingWorkout] = useState(false);
+  const [schedule, setSchedule] = useState<ScheduleWeek | null>(null);
+  const [phases, setPhases] = useState<PhaseWeeks>({});
+  const [selectedPhase, setSelectedPhase] = useState<number>(1);
+  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(nextMonday(new Date()));
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const workoutSchedule = {
-    'Monday': {
-      name: 'Upper Body Power',
-      type: 'Power',
-      duration: '45 min',
-      phase: 'Power Development',
-      exercises: 5,
-      status: 'completed',
-      time: '6:00 PM'
-    },
-    'Tuesday': {
-      name: 'Lower Body Strength',
-      type: 'Strength',
-      duration: '50 min',
-      phase: 'Power Development',
-      exercises: 6,
-      status: 'completed',
-      time: '6:00 PM'
-    },
-    'Wednesday': {
-      name: 'Recovery & Mobility',
-      type: 'Recovery',
-      duration: '30 min',
-      phase: 'Power Development',
-      exercises: 4,
-      status: 'active',
-      time: '7:00 AM'
-    },
-    'Thursday': {
-      name: 'Explosive Power Training',
-      type: 'Power',
-      duration: '45 min',
-      phase: 'Power Development',
-      exercises: 5,
-      status: 'scheduled',
-      time: '6:00 PM'
-    },
-    'Friday': {
-      name: 'Agility & Speed',
-      type: 'Agility',
-      duration: '40 min',
-      phase: 'Power Development',
-      exercises: 4,
-      status: 'scheduled',
-      time: '6:00 PM'
-    },
-    'Saturday': {
-      name: 'Competition Simulation',
-      type: 'Competition',
-      duration: '60 min',
-      phase: 'Power Development',
-      exercises: 8,
-      status: 'scheduled',
-      time: '10:00 AM'
-    },
-    'Sunday': {
-      name: 'Active Recovery',
-      type: 'Recovery',
-      duration: '25 min',
-      phase: 'Power Development',
-      exercises: 3,
-      status: 'scheduled',
-      time: '11:00 AM'
+  const userId = 'user1';
+
+  // Calculate week start and end dates based on start date and week number
+  const getWeekDates = useCallback((weekNumber: number): { startDate: Date; endDate: Date } => {
+    if (!startDate) {
+      const now = new Date();
+      return {
+        startDate: now,
+        endDate: addDays(now, 6)
+      };
+    }
+    
+    const weekStart = addWeeks(startDate, weekNumber - 1);
+    const weekEnd = addDays(weekStart, 6);
+    
+    return {
+      startDate: weekStart,
+      endDate: weekEnd
+    };
+  }, [startDate]);
+
+  // Fetch schedule data
+  const fetchSchedule = async (phase: number, week: number) => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data } = await getScheduleForWeek(userId, phase, week);
+      if (data) {
+        const { startDate: weekStart, endDate: weekEnd } = getWeekDates(week);
+        setSchedule({
+          ...data,
+          startDate: weekStart,
+          endDate: weekEnd
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch schedule:', error);
+      toast.error('Failed to load schedule');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'active': return 'bg-blue-500';
-      case 'scheduled': return 'bg-gray-300';
-      default: return 'bg-gray-200';
+  // Fetch phases and weeks
+  const fetchPhasesAndWeeks = async () => {
+    if (!userId) return;
+    
+    try {
+      const { data } = await getPhasesAndWeeks(userId);
+      if (data) {
+        setPhases(data);
+        // Set the current phase and week as default regarding the current date
+        const currentPhase = Math.min(...Object.keys(data).map(Number));
+        const currentWeek = Math.min(...data[currentPhase]);
+        setSelectedPhase(currentPhase);
+        setSelectedWeek(currentWeek);
+        await fetchSchedule(currentPhase, currentWeek);
+      }
+    } catch (error) {
+      console.error('Failed to fetch phases and weeks:', error);
+      toast.error('Failed to load training phases');
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed': return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-      case 'active': return <Badge className="bg-blue-100 text-blue-800">Active</Badge>;
-      case 'scheduled': return <Badge variant="outline">Scheduled</Badge>;
-      default: return <Badge variant="secondary">Not Scheduled</Badge>;
+  // Handle start date change
+  const handleStartDateChange = (date: Date | undefined) => {
+    if (!date) return;
+    
+    // Ensure the date is a Monday
+    const monday = startOfWeek(date, { weekStartsOn: 1 });
+    setStartDate(monday);
+    setIsDatePickerOpen(false);
+    
+    // Refresh the schedule with the new start date
+    fetchSchedule(selectedPhase, selectedWeek);
+  };
+
+  // Load current week's schedule
+  const loadCurrentWeek = async () => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data } = await getCurrentWeekSchedule(userId);
+      if (data) {
+        const { startDate: weekStart, endDate: weekEnd } = getWeekDates(selectedWeek);
+        setSchedule({
+          ...data,
+          startDate: weekStart,
+          endDate: weekEnd
+        });
+        setSelectedPhase(data.workouts[0]?.phase || 1);
+        setSelectedWeek(data.weekNumber);
+      }
+    } catch (error) {
+      console.error('Failed to fetch current week:', error);
+      toast.error('Failed to load current week');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'Power': return 'bg-orange-100 text-orange-800';
-      case 'Strength': return 'bg-blue-100 text-blue-800';
-      case 'Agility': return 'bg-purple-100 text-purple-800';
-      case 'Recovery': return 'bg-green-100 text-green-800';
-      case 'Competition': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  // Initial load
+  useEffect(() => {
+    fetchPhasesAndWeeks();
+  }, []);
+
+  // Handle week navigation
+  const handleWeekChange = async (direction: 'prev' | 'next') => {
+    if (!phases[selectedPhase]) return;
+    
+    let newWeek = selectedWeek;
+    let newPhase = selectedPhase;
+    
+    if (direction === 'prev') {
+      if (newWeek > 1) {
+        newWeek--;
+      } else if (newPhase > 1) {
+        newPhase--;
+        newWeek = Math.max(...phases[newPhase]);
+      } else {
+        return; // Already at the first week of the first phase
+      }
+    } else {
+      if (newWeek < Math.max(...phases[newPhase])) {
+        newWeek++;
+      } else if (newPhase < Object.keys(phases).length) {
+        newPhase++;
+        newWeek = 1;
+      } else {
+        return; // Already at the last week of the last phase
+      }
+    }
+    
+    setIsNavigating(true);
+    setSelectedPhase(newPhase);
+    setSelectedWeek(newWeek);
+    await fetchSchedule(newPhase, newWeek);
+    setIsNavigating(false);
+  };
+
+  // Handle phase change
+  const handlePhaseChange = (phase: number) => {
+    setSelectedPhase(phase);
+    setSelectedWeek(phases[phase]?.[0] || 1);
+  };
+
+  // Handle week select
+  const handleWeekSelect = (week: number) => {
+    setSelectedWeek(week);
+  };
+
+  // Calculate statistics for the week
+  const stats: Stats = {
+    totalWorkouts: schedule?.workouts.filter(w => w.type !== 'Rest').length || 0,
+    completed: schedule?.workouts.filter(w => w.status === 'completed').length || 0,
+    scheduled: schedule?.workouts.filter(w => w.status === 'scheduled').length || 0,
+    inProgress: schedule?.workouts.filter(w => w.status === 'in-progress').length || 0,
+    totalDuration: schedule?.workouts.reduce((sum, w) => sum + (w.duration || 0), 0) || 0,
+  };
+
+  // Handle starting a workout
+  const handleStartWorkout = async (workoutId: string) => {
+    if (!workoutId || !userId) return;
+    
+    setIsStartingWorkout(true);
+    try {
+      const result = await startWorkout(workoutId, userId);
+      
+      if (result?.success) {
+        toast.success('Workout started!');
+        // Navigate to the workout page
+        router.push(`/workout?sessionId=${result.sessionId}`);
+      } else {
+        throw new Error('Failed to start workout');
+      }
+    } catch (error) {
+      console.error('Error starting workout:', error);
+      toast.error('Failed to start workout. Please try again.');
+    } finally {
+      setIsStartingWorkout(false);
     }
   };
 
-  const weekStats = {
-    totalWorkouts: 7,
-    completed: 2,
-    scheduled: 5,
-    totalDuration: '315 min',
-    averageIntensity: 'High'
-  };
+  if (isLoading && !schedule) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Skeleton className="h-12 w-64 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+            <Skeleton key={day} className="h-64 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">No Schedule Found</h1>
+        <p className="text-gray-600">Please check back later or contact support.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Training Schedule</h1>
-          <p className="text-gray-600">
-            Week {format(weekStart, 'MMM d')} - {format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'MMM d, yyyy')}
-          </p>
-        </div>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Workout
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Schedule New Workout</DialogTitle>
-                <DialogDescription>
-                  Add a custom workout to your training schedule
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Workout scheduling functionality would be implemented here with form controls
-                  for selecting date, time, workout type, and exercises.
-                </p>
-              </div>
-              <DialogFooter>
-                <Button>Schedule Workout</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Button>
-            <CalendarIcon className="w-4 h-4 mr-2" />
-            Export Calendar
-          </Button>
-        </div>
-      </div>
+      {/* Header with navigation */}
+      <ScheduleHeader 
+        title="Training Schedule"
+        currentWeek={{
+          phase: selectedPhase,
+          week: selectedWeek,
+          startDate: schedule.startDate.toISOString(),
+          endDate: schedule.endDate.toISOString()
+        }}
+        onNavigateCurrent={loadCurrentWeek}
+      >
+        <WeekNavigator
+          phase={selectedPhase}
+          week={selectedWeek}
+          phases={phases}
+          isNavigating={isNavigating}
+          onWeekChange={handleWeekChange}
+          onPhaseChange={handlePhaseChange}
+          onWeekSelect={handleWeekSelect}
+          onGo={() => fetchSchedule(selectedPhase, selectedWeek)}
+        />
+      </ScheduleHeader>
 
       {/* Week Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{weekStats.totalWorkouts}</div>
-            <div className="text-sm text-gray-600">Total Workouts</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{weekStats.completed}</div>
-            <div className="text-sm text-gray-600">Completed</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{weekStats.totalDuration}</div>
-            <div className="text-sm text-gray-600">Total Duration</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{weekStats.averageIntensity}</div>
-            <div className="text-sm text-gray-600">Avg Intensity</div>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsGrid stats={stats} />
 
       {/* Weekly Schedule */}
       <Card className="mb-8">
@@ -212,177 +278,54 @@ export default function Schedule() {
           <CardTitle className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-blue-600" />
             Weekly Training Schedule
+            <div className="ml-auto">
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="ml-4 text-sm font-normal"
+                  >
+                    {startDate ? format(startDate, 'MMM d, yyyy') : 'Select start date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <DatePickerWithPresets
+                    selected={startDate}
+                    onSelect={handleStartDateChange}
+                    fromDate={new Date()}
+                    showDayNavigation
+                    showOutsideDays
+                    className="rounded-md border"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </CardTitle>
           <CardDescription>
-            Power Development Phase • Week 2 of 3
+            Power Development Phase • Week {selectedWeek} of {phases[selectedPhase]?.length || 0}
+            {startDate && (
+              <span>
+                {' • '}
+                {format(addWeeks(startDate, selectedWeek - 1), 'MMM d')} - {format(addDays(addWeeks(startDate, selectedWeek - 1), 6), 'MMM d, yyyy')}
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-            {weekDays.map((day, index) => {
-              const dayName = format(day, 'EEEE');
-              const workout = workoutSchedule[dayName as keyof typeof workoutSchedule];
-              
-              return (
-                <div key={index} className="space-y-2">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-gray-600">{format(day, 'EEE')}</div>
-                    <div className="text-lg font-bold">{format(day, 'd')}</div>
-                  </div>
-                  
-                  {workout ? (
-                    <Card className="min-h-[200px] hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div className={`w-full h-1 rounded-full ${getStatusColor(workout.status)}`} />
-                          
-                          <div>
-                            <h3 className="font-semibold text-sm mb-1">{workout.name}</h3>
-                            <div className="space-y-1">
-                              <Badge className={getTypeColor(workout.type)}>
-                                {workout.type}
-                              </Badge>
-                              {getStatusBadge(workout.status)}
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2 text-xs text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              <span>{workout.time}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Target className="w-3 h-3" />
-                              <span>{workout.duration}</span>
-                            </div>
-                            <div>{workout.exercises} exercises</div>
-                          </div>
-                          
-                          {workout.status === 'active' && (
-                            <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
-                              <Play className="w-3 h-3 mr-1" />
-                              Start
-                            </Button>
-                          )}
-                          
-                          {workout.status === 'completed' && (
-                            <div className="flex items-center justify-center text-xs text-green-600">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Completed
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card className="min-h-[200px] border-dashed">
-                      <CardContent className="p-4 flex items-center justify-center h-full">
-                        <div className="text-center text-gray-400">
-                          <Plus className="w-6 h-6 mx-auto mb-2" />
-                          <div className="text-xs">Rest Day</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+            {schedule.workouts.map((workout) => (
+              <WorkoutCard
+                key={workout.id}
+                workout={workout}
+                startDate={schedule.startDate.toISOString()}
+                onStartWorkout={handleStartWorkout}
+                isStartingWorkout={isStartingWorkout}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Phase Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              Phase Progress
-            </CardTitle>
-            <CardDescription>
-              Power Development Phase Overview
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Week 2 of 3</span>
-                  <span>67% Complete</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '67%' }} />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">14</div>
-                  <div className="text-xs text-gray-600">Workouts Completed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-orange-600">7</div>
-                  <div className="text-xs text-gray-600">Remaining</div>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-2">Focus Areas This Week</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Explosive power development</li>
-                  <li>• Competition simulation</li>
-                  <li>• Recovery optimization</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-600" />
-              Upcoming Milestones
-            </CardTitle>
-            <CardDescription>
-              Key assessments and phase transitions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-blue-900">Mid-Phase Assessment</h4>
-                    <p className="text-sm text-blue-700">Performance testing</p>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">In 2 days</Badge>
-                </div>
-              </div>
-              
-              <div className="p-3 bg-orange-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-orange-900">Phase Transition</h4>
-                    <p className="text-sm text-orange-700">Move to Peak Performance</p>
-                  </div>
-                  <Badge className="bg-orange-100 text-orange-800">In 1 week</Badge>
-                </div>
-              </div>
-              
-              <div className="p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-green-900">Program Completion</h4>
-                    <p className="text-sm text-green-700">12-week program end</p>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">In 4 weeks</Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
+  NavigationMenuLink,
 } from '@/components/ui/navigation-menu';
 import {
   Sheet,
@@ -114,8 +111,8 @@ export function Navigation() {
               <NavigationMenuList>
                 {navigationItems.map((item) => (
                   <NavigationMenuItem key={item.href}>
-                    <Link href={item.href} legacyBehavior passHref>
                       <NavigationMenuLink
+                        href={item.href}
                         className={cn(
                           "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50",
                           pathname === item.href && "bg-accent text-accent-foreground"
@@ -124,7 +121,6 @@ export function Navigation() {
                         <item.icon className="w-4 h-4 mr-2" />
                         {item.title}
                       </NavigationMenuLink>
-                    </Link>
                   </NavigationMenuItem>
                 ))}
               </NavigationMenuList>
@@ -198,7 +194,7 @@ export function Navigation() {
                         "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent transition-colors duration-200",
                         pathname === item.href && "bg-accent text-accent-foreground"
                       )}
-                    >
+                      >
                       <item.icon className="w-4 h-4" />
                       <div>
                         <div className="font-medium">{item.title}</div>

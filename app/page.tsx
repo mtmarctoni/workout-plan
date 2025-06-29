@@ -75,7 +75,6 @@ export default function Home() {
           </Link>
         </div>
       </div>
-
       {/* Current Program Status */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Card className="lg:col-span-2 hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
@@ -158,7 +157,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
-
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {recentProgress.map((metric, index) => (
@@ -183,7 +181,6 @@ export default function Home() {
           </Card>
         ))}
       </div>
-
       {/* Program Features */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <Card className="text-center hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
@@ -234,7 +231,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
-
       {/* Call to Action */}
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 shadow-2xl">
         <CardContent className="p-8 text-center">
